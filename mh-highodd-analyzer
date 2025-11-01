@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>👻 MH High Odd Analyzer — Live Run (Neon)</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#03040a; --bg2:#071025;
+    --panel:#04101a; --glass:rgba(255,255,255,0.03);
+    --neon-cyan:#00f0d8; --neon-mag:#bd7bff; --neon-pink:#ff57b9;
+    --neon-green:#31ff9f; --neon-blue:#7ad2ff;
+    --muted:#9fb0c1;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh;
+    background:radial-gradient(1200px 600px at 10% 10%, rgba(15,27,50,0.18), transparent),
+               linear-gradient(180deg,var(--bg1),var(--bg2));
+    color:#e6fbff; font-family:Rajdhani,Segoe UI,Inter,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased; padding:18px;
+  }
+
+  .wrap{max-width:420px;margin:0 auto;background:linear-gradient(180deg, rgba(6,14,20,0.6), rgba(3,8,14,0.6)); border-radius:14px; padding:14px; box-shadow:0 12px 40px rgba(0,0,0,0.6); border:1px solid rgba(150,80,255,0.06)}
+  header{display:flex;align-items:center;gap:10px;justify-content:center;flex-direction:column}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo .ghost{font-size:22px}
+  h1{margin:8px 0 2px;font-family:Orbitron,monospace;font-size:18px;color:linear-gradient(90deg,#fff,#bcd);}
+  .sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:10px}
+
+  .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.012)); border-radius:12px; padding:10px; border:1px solid rgba(125,80,255,0.06); margin-bottom:10px}
+  .row{display:flex;gap:8px}
+  label{font-size:11px;color:var(--muted);display:block;margin-bottom:6px}
+  input[type="time"], input[type="number"]{
+    width:100%; padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);
+    background:transparent;color:#e6fbff;font-weight:700;font-size:14px;outline:none;
+    box-shadow:0 6px 18px rgba(88,50,160,0.03) inset;
+  }
+
+  /* neon outline style for inputs (like screenshot purple) */
+  .neon-field{position:relative;border-radius:12px;padding:6px;border:2px solid transparent;background:linear-gradient(180deg, rgba(8,12,20,0.6), rgba(6,8,16,0.4));}
+  .neon-field:before{
+    content:"";position:absolute;inset:-2px;border-radius:14px;
+    background:linear-gradient(90deg, rgba(123,58,237,0.18), rgba(99,102,241,0.18));
+    filter:blur(6px);opacity:0.85;z-index:0;
+  }
+  .neon-field .inner{position:relative;z-index:2}
+
+  .grid{display:grid;grid-template-columns: 1fr 1fr; gap:8px}
+  .full{grid-column:1/-1}
+
+  .btn{
+    margin-top:10px;padding:12px;border-radius:14px;border:0;cursor:pointer;
+    background:linear-gradient(90deg,var(--neon-cyan),var(--neon-mag));color:#02101a;font-weight:900;font-size:15px;
+    box-shadow:0 8px 30px rgba(123,58,237,0.12);
+  }
+
+  /* Live badge */
+  .live-wrap{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px}
+  .live-indicator{display:flex;align-items:center;gap:8px}
+  .pulse{
+    width:12px;height:12px;border-radius:50%;background:var(--neon-green);box-shadow:0 0 10px var(--neon-green); animation:pulse 1.6s infinite;
+  }
+  @keyframes pulse{0%{transform:scale(0.9);opacity:0.9}50%{transform:scale(1.15);opacity:0.55}100%{transform:scale(0.9);opacity:0.9}}
+
+  /* signals */
+  .signals{margin-top:12px; display:flex;flex-direction:column;gap:10px}
+  .sig-card{
+    border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.04);
+    background:linear-gradient(180deg, rgba(4,8,12,0.45), rgba(6,12,18,0.35));
+    box-shadow:0 10px 30px rgba(0,0,0,0.6);
+    position:relative; overflow:hidden;
+  }
+  .sig-card:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg, rgba(123,58,237,0.02), rgba(0,240,216,0.02));mix-blend-mode:overlay;pointer-events:none}
+  .sig-top{display:flex;justify-content:space-between;align-items:center}
+  .sig-left{display:flex;gap:10px;align-items:center}
+  .sig-dot{font-size:18px}
+  .sig-time{font-family:Orbitron,monospace;font-weight:800;color:var(--neon-cyan);font-size:16px}
+  .sig-title{font-size:12px;color:var(--muted);margin-top:2px}
+  .sig-right{text-align:right}
+  .sig-range{font-weight:900;color:var(--neon-pink);font-size:15px}
+  .sig-conf{font-size:18px;font-weight:900;color:var(--neon-green);margin-top:6px}
+  .sig-rule{font-weight:800;color:#ffd7a6;margin-top:8px;font-size:13px}
+
+  /* neon glow stripes */
+  .neon-stripe{height:3px;border-radius:3px;margin-top:10px;background:linear-gradient(90deg,var(--neon-mag),var(--neon-cyan));box-shadow:0 6px 30px rgba(123,58,237,0.12) inset}
+
+  .controls{display:flex;gap:8px;margin-top:8px}
+  .small-btn{padding:8px 10px;border-radius:10px;border:0;cursor:pointer;background:linear-gradient(90deg,#ffd166,#ff8a66);font-weight:800;color:#02101a}
+
+  .disclaimer{font-size:12px;color:#ffd7a6;margin-top:8px;text-align:center}
+
+  footer{font-size:12px;color:var(--muted);text-align:center;margin-top:10px}
+
+  /* responsive */
+  @media(max-width:460px){
+    .grid{grid-template-columns:1fr}
+    .wrap{padding:12px}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap" role="application" aria-label="MH High Odd Analyzer">
+    <header>
+      <div class="logo">
+        <div class="ghost">👻</div>
+        <div style="text-align:left">
+          <div style="font-family:Orbitron,monospace;font-weight:800;font-size:15px;color:var(--neon-mag)">Ghost High Odd Analyzer</div>
+          <div style="font-size:11px;color:var(--muted)">MH Super Aviator · Sri Lanka Time</div>
+        </div>
+      </div>
+      <div class="sub">Enter recent high spikes (T=Time, O=Odd). Click analyze for live-style signals.</div>
+    </header>
+
+    <div class="panel" aria-label="inputs panel">
+      <div class="grid">
+        <div class="neon-field"><div class="inner"><label>T1 time</label><input id="t1" type="time" /></div></div>
+        <div class="neon-field"><div class="inner"><label>01 multiplier</label><input id="o1" type="number" step="0.01" placeholder="e.g. 15.78" /></div></div>
+
+        <div class="neon-field"><div class="inner"><label>T2 time</label><input id="t2" type="time" /></div></div>
+        <div class="neon-field"><div class="inner"><label>02 multiplier</label><input id="o2" type="number" step="0.01" /></div></div>
+
+        <div class="neon-field"><div class="inner"><label>T3 time</label><input id="t3" type="time" /></div></div>
+        <div class="neon-field"><div class="inner"><label>03 multiplier</label><input id="o3" type="number" step="0.01" /></div></div>
+
+        <div class="neon-field"><div class="inner"><label>T4 time</label><input id="t4" type="time" /></div></div>
+        <div class="neon-field"><div class="inner"><label>04 multiplier</label><input id="o4" type="number" step="0.01" /></div></div>
+
+        <div class="neon-field"><div class="inner"><label>T5 time</label><input id="t5" type="time" /></div></div>
+        <div class="neon-field"><div class="inner"><label>05 multiplier</label><input id="o5" type="number" step="0.01" /></div></div>
+      </div>
+
+      <button id="analyzeBtn" class="btn">🚀 Anlizing & Get Signal</button>
+
+      <div class="live-wrap">
+        <div class="live-indicator"><div class="pulse" aria-hidden></div><div class="muted">LIVE RUN</div></div>
+        <div style="text-align:right"><div class="muted">Status</div><div style="font-weight:800;color:var(--neon-blue)">Analyzing...</div></div>
+      </div>
+    </div>
+
+    <div id="output" class="panel" style="display:none">
+      <div id="signals" class="signals" aria-live="polite"></div>
+      <div class="neon-stripe" aria-hidden></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <div class="muted">Saved signals store locally</div>
+        <div>
+          <button id="saveBtn" class="small-btn">💾 Save</button>
+          <button id="regenBtn" class="small-btn" style="background:linear-gradient(90deg,#7ee7ff,#a78bfa)">♻️ Regen</button>
+        </div>
+      </div>
+      <div id="savedNotice" class="disclaimer" style="display:none;color:#8ff5a2">Saved successfully</div>
+    </div>
+
+    <div class="disclaimer">⚠️ This app shows simulated "signal-style" cards for analysis/demo only — <strong>not</strong> a real predictor.</div>
+    <footer>MH Super Aviator · Sri Lanka Time · ⚡</footer>
+  </div>
+
+<script>
+/* Live-run Neon version: reads up to 5 time/odd entries and generates two live-style signal cards.
+   This is simulation/visualization only.
+*/
+
+function getInputs(){
+  const times = ['t1','t2','t3','t4','t5'].map(id => document.getElementById(id).value);
+  const odds  = ['o1','o2','o3','o4','o5'].map(id => {
+    const v = parseFloat(document.getElementById(id).value);
+    return isNaN(v) ? null : v;
+  });
+  const list = [];
+  for (let i=0;i<5;i++){
+    if (times[i] || odds[i] !== null) list.push({time: times[i] || '--:--', odd: odds[i]});
+  }
+  return list;
+}
+
+function computeSimSignals(list){
+  // Filter high odds >=7 (user's screenshot shows 7x-15x ranges)
+  const highs = list.filter(r=>typeof r.odd === 'number' && r.odd >= 7).map(r=>r.odd);
+  // Use last 3 highs to compute mean
+  const last = highs.slice(-3);
+  const mean = last.length ? last.reduce((a,b)=>a+b,0)/last.length : (highs.length ? highs.reduce((a,b)=>a+b,0)/highs.length : 12);
+  // expected min/max
+  let minR = Math.max(6, Math.round(mean*0.6*100)/100);
+  let maxR = Math.round(Math.max(mean*1.35, minR+3)*100)/100;
+
+  // confidence heuristic
+  let conf = 62;
+  if (highs.length >= 3) conf += 20;
+  if (last.length >=2) conf += 8;
+  // if extremely large values exist, tweak
+  if (highs.some(h=>h>=50)) conf -= 8;
+  conf = Math.min(99.9, Math.max(60, Math.round(conf)));
+
+  // offsets assume average ~12-16s per round; compute offset seconds (for display)
+  const rounds = Math.max(1, Math.round((list.length || 4) / Math.max(1, highs.length || 1)));
+  const secPerRound = 14;
+  const offsetPrimary = Math.max(4, Math.round((rounds * secPerRound) + 8));
+  const offsetBackup = Math.max(3, offsetPrimary - 2);
+
+  // create times (hh:mm)
+  function hhmmPlus(sec){
+    const d = new Date(); d.setSeconds(d.getSeconds() + sec);
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mm = String(d.getMinutes()).padStart(2,'0');
+    return `${hh}:${mm} [+${sec}s]`;
+  }
+
+  const primary = {
+    dot: '🟢',
+    time: hhmmPlus(offsetPrimary),
+    range: `${minR} - ${maxR}`,
+    conf: `${Math.round(conf)}%+`,
+    title: 'Ultra-Prime Signal',
+    rule: 'Entry: Direct/Skip 1 · Sri Lanka Time',
+    offset: offsetPrimary
+  };
+  const backup = {
+    dot: '🔵',
+    time: hhmmPlus(offsetBackup),
+    range: `${Math.max(6, Math.round(minR*0.85*100)/100)} - ${Math.round(maxR*0.95*100)/100}`,
+    conf: `${Math.max(70, Math.round(conf-6))}%+`,
+    title: 'Prime Backup',
+    rule: 'Entry: Skip 1/Direct · Sri Lanka Time',
+    offset: offsetBackup
+  };
+  return {primary, backup, highs};
+}
+
+function renderCards(sim){
+  const wrap = document.getElementById('signals');
+  wrap.innerHTML = ''; // clear
+  function makeCard(o){
+    const el = document.createElement('div');
+    el.className = 'sig-card';
+    el.innerHTML = `
+      <div class="sig-top">
+        <div class="sig-left">
+          <div class="sig-dot">${o.dot}</div>
+          <div>
+            <div class="sig-time">${o.time}</div>
+            <div class="sig-title">${o.title}</div>
+          </div>
+        </div>
+        <div class="sig-right">
+          <div class="sig-range">${o.range}x</div>
+          <div class="muted">[+${o.offset}s]</div>
+        </div>
+      </div>
+      <div class="sig-conf">${o.conf}</div>
+      <div class="sig-rule">${o.rule}</div>
+    `;
+    return el;
+  }
+
+  wrap.appendChild(makeCard(sim.primary));
+  wrap.appendChild(makeCard(sim.backup));
+  // animate a glow flash to simulate "live run"
+  wrap.querySelectorAll('.sig-card').forEach((c,i)=>{
+    c.style.opacity = 0;
+    setTimeout(()=>{ c.style.transition='opacity .35s ease'; c.style.opacity=1; }, 80 + i*140);
+  });
+
+  // attach save/regenerate buttons handlers
+  document.getElementById('saveBtn').onclick = ()=> {
+    try {
+      localStorage.setItem('mh_last_signals', JSON.stringify({sim, ts:new Date().toISOString()}));
+      const note = document.getElementById('savedNotice'); note.style.display='block';
+      setTimeout(()=> note.style.display='none',1400);
+    } catch(e){}
+  };
+  document.getElementById('regenBtn').onclick = ()=> {
+    // small visual regen
+    document.getElementById('analyzeBtn').click();
+  };
+}
+
+document.getElementById('analyzeBtn').addEventListener('click', ()=>{
+  const list = getInputs();
+  const sim = computeSimSignals(list);
+  document.getElementById('output').style.display = 'block';
+  renderCards(sim);
+  // persist inputs
+  try { localStorage.setItem('mh_last_inputs', JSON.stringify(list)); } catch(e){}
+});
+
+// load last inputs/signals
+window.addEventListener('load', ()=>{
+  try {
+    const prev = JSON.parse(localStorage.getItem('mh_last_inputs')||'[]');
+    if (prev && prev.length){
+      for (let i=0;i<prev.length && i<5;i++){
+        if (prev[i].time) document.getElementById('t'+(i+1)).value = prev[i].time;
+        if (prev[i].odd !== undefined && prev[i].odd !== null) document.getElementById('o'+(i+1)).value = prev[i].odd;
+      }
+    }
+    const saved = JSON.parse(localStorage.getItem('mh_last_signals')||'null');
+    if (saved && saved.sim){
+      document.getElementById('output').style.display='block';
+      renderCards(saved.sim);
+    }
+  } catch(e){}
+});
+</script>
+</body>
+</html>
